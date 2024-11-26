@@ -133,10 +133,10 @@ int main() {
     free(h_a);
     free(h_b);
     free(h_partial);
-    free(d_a);
-    free(d_b);
-    free(d_partial);
-    free(d_result);
+    cudaFree(d_a);
+    cudaFree(d_b);
+    cudaFree(d_partial);
+    cudaFree(d_result);
 
     return 0;
 }

@@ -121,7 +121,7 @@ int main() {
     float cuda_time;
     cudaEventElapsedTime(&cuda_time, cuda_start, cuda_stop);
     printf("CUDA Time: %.6f s\n", cuda_time/1000.0f);
-    
+
     int total = 0;
     for(int i=0; i<blocksPerGrid; i++) {
         total += h_partial[i];

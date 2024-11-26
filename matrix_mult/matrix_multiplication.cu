@@ -107,9 +107,9 @@ int main(int argc, char **argv) {
     free(h_b);
     free(h_cpu);
     free(h_gpu);
-    free(d_a);
-    free(d_b);
-    free(d_c);
+    cudaFree(d_a);
+    cudaFree(d_b);
+    cudaFree(d_c);
 
     return 0;
 }

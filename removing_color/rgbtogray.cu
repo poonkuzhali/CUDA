@@ -33,14 +33,13 @@ __global__ void cuda_convertImage(unsigned char *d_input, unsigned char *d_outpu
 }
 
 int main(int argc, char **argv) {
-    if (argc < 2) {
-        printf("Input image required!!\n");
+    if (argc < 3) {
+        printf("Input and output image required!!\n");
         return -1;
     }
 
     unsigned error;
     unsigned char* h_input = NULL;
-    unsigned char* h_output = NULL;
     unsigned w, h;
 
     //Decoding input
@@ -54,7 +53,7 @@ int main(int argc, char **argv) {
     serial_implementation(h, w, h_input);
     clock_t end = clock();
 
-    printf("Serial time: %.6f s", (double)(end-start)/CLOCKS_PER_SEC);
+    printf("Serial time: %.6f s\n", (double)(end-start)/CLOCKS_PER_SEC);
 
     error = lodepng_encode32_file("CPU_grayscale.png", h_input, w, h);
     if (error) {
@@ -64,7 +63,7 @@ int main(int argc, char **argv) {
     }
 
     //allocate memory on device
-    size_t size = w * h * 4;
+    const size_t size = w * h * 4;
     unsigned char *d_input = NULL;
     unsigned char *d_output = NULL;
 
@@ -98,17 +97,23 @@ int main(int argc, char **argv) {
     cudaEventElapsedTime(&cuda_time, cuda_start, cuda_stop);
     printf("CUDA Time: %.6f s\n", cuda_time/1000.0f);
 
+    unsigned char* h_output = (unsigned char *)malloc(size);
+    cudaError_t err = cudaMemcpy(h_output, d_output, size, cudaMemcpyDeviceToHost);
+    if (err != cudaSuccess) {
+        printf("cudaMemcpy failed: %s\n", cudaGetErrorString(err));
+        return -1;
+    }
 
-    cudaMemcpy(h_output, d_output, size, cudaMemcpyDeviceToHost);
-
-    error = lodepng_encode32_file("GPU_grayscale.png", h_output, w, h);
-
+    error = lodepng_encode32_file(argv[2], h_output, w, h);
+    if (error) {
+        printf("Error encoding image: %s\n", lodepng_error_text(error));
+    }
 
     free(h_input);
     free(h_output);
     cudaFree(d_input);
     cudaFree(d_output);
-    printf("Image converted to grayscale successfully.\n");
+    printf("%dx%d image converted to grayscale successfully.\n", w, h);
     return 0;
 }
 

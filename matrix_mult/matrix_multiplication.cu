@@ -74,7 +74,7 @@ int main(int argc, char **argv) {
     cudaMemcpy(d_a, h_a, size, cudaMemcpyHostToDevice);
     cudaMemcpy(d_b, h_b, size, cudaMemcpyHostToDevice);
 
-    int threads = 16;
+    int threads = atoi(argv[2]);
     dim3 threadsPerBlock(threads, threads);
     dim3 blocksPerGrid((N+threads-1)/threads, (N+threads-1)/threads);
 
@@ -85,6 +85,8 @@ int main(int argc, char **argv) {
 
     cudaEventRecord(cuda_start);
     gpuMultiplication<<<blocksPerGrid, threadsPerBlock>>>(d_a, d_b, d_c, N);
+
+    cudaDeviceSynchronize();
     cudaEventRecord(cuda_stop);
     cudaEventSynchronize(cuda_stop);
 
@@ -96,7 +98,7 @@ int main(int argc, char **argv) {
 
     int correct = 1;
     for (int i = 0; i < N * N; i++) {
-        if (abs(h_cpu[i] - h_gpu[i]) > 1e-4) {
+        if (fabs(h_cpu[i] - h_gpu[i]) > 1e-4) {
             correct = 0;
             break;
         }

@@ -68,7 +68,7 @@ int main() {
     cudaError_t err_code = cudaGetDeviceCount(&cuda_devices);
 
     if (cuda_devices < 1) {
-        printf("CUDA enabled devices is 0!!!\n");
+        printf("WAIT A MINUTE.. There are no CUDA enabled devices!!!\n");
         return -1;
     }
 
@@ -86,7 +86,7 @@ int main() {
     printf("Prop 1: Max threads per block: %d\n", device_properties.maxThreadsPerBlock);
     printf("Prop 2: Registers per block: %d\n", device_properties.regsPerBlock);
     printf("Prop 3: Total global memory: %zu\n", device_properties.totalGlobalMem);
-    printf("Prop 4: Compute Mode: %d\n", device_properties.computeMode);
+    printf("Prop 4: Shared memory per block: %zu\n", device_properties.sharedMemPerBlock);
     
     //Initialize host arrays
     InitArray(h_a, length);

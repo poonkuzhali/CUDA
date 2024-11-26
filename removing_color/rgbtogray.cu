@@ -33,8 +33,8 @@ __global__ void cuda_convertImage(unsigned char *d_input, unsigned char *d_outpu
 }
 
 int main(int argc, char **argv) {
-    if (argc < 3) {
-        printf("Input and output images required!!\n");
+    if (argc < 2) {
+        printf("Input image required!!\n");
         return -1;
     }
 
@@ -83,23 +83,26 @@ int main(int argc, char **argv) {
     const int threadsPerBlock = 256;
     const int blocksPerGrid = (w * h + threadsPerBlock - 1)/threadsPerBlock;
 
-    cudaEvent_t start;
-    cudaEvent_t stop;
-    cudaEventCreate(&start);
-    cudaEventCreate(&stop);
+    cudaEvent_t cuda_start;
+    cudaEvent_t cuda_stop;
+    cudaEventCreate(&cuda_start);
+    cudaEventCreate(&cuda_stop);
 
-    cudaEventRecord(start);
+    cudaEventRecord(cuda_start);
     cuda_convertImage<<<blocksPerGrid, threadsPerBlock>>>(d_input, d_output, w, h);
-    cudaEventRecord(stop);
+    cudaEventRecord(cuda_stop);
 
-    cudaEventSynchronize(stop);
+    cudaEventSynchronize(cuda_stop);
 
     float cuda_time;
-    cudaEventElapsedTime(&cuda_time, start, stop);
+    cudaEventElapsedTime(&cuda_time, cuda_start, cuda_stop);
     printf("CUDA Time: %.6f s\n", cuda_time/1000.0f);
 
 
     cudaMemcpy(h_output, d_output, size, cudaMemcpyDeviceToHost);
+
+    error = lodepng_encode32_file("GPU_grayscale.png", h_output, w, h);
+
 
     free(h_input);
     free(h_output);
@@ -108,3 +111,6 @@ int main(int argc, char **argv) {
     printf("Image converted to grayscale successfully.\n");
     return 0;
 }
+
+ //nvcc rgbtogray.cu lodepng.cpp -o rgbtogray
+ //./rgbtogray boat.png

@@ -63,6 +63,11 @@ int main() {
     cudaMalloc((void**)&d_b, length * sizeof(int));
     cudaMalloc((void**)&d_result, length * sizeof(int));
 
+    cudaEvent_t cuda_start;
+    cudaEvent_t cuda_stop;
+    cudaEventCreate(&cuda_start);
+    cudaEventCreate(&cuda_stop);
+
     //print cuda enabled hardware devices
     int cuda_devices;
     cudaError_t err_code = cudaGetDeviceCount(&cuda_devices);
@@ -97,6 +102,7 @@ int main() {
     cudaMemcpy(d_b, h_b, length * sizeof(int), cudaMemcpyHostToDevice);
 
     //calling CUDA kernel
+    cudaEventRecord(cuda_start);
     computeSquares<<<blocksPerGrid, threadsPerBlock>>>(d_a, d_b, d_result, length);
     cudaDeviceSynchronize();
 
@@ -108,6 +114,14 @@ int main() {
 
     int *h_partial = (int*)malloc(blocksPerGrid * sizeof(int));
     cudaMemcpy(h_partial, d_partial, blocksPerGrid * sizeof(int), cudaMemcpyDeviceToHost);
+    cudaEventRecord(cuda_stop);
+
+    cudaEventSynchronize(cuda_stop);
+
+    float cuda_time;
+    cudaEventElapsedTime(&cuda_time, cuda_start, cuda_stop);
+    printf("CUDA Time: %.6f s\n", cuda_time/1000.0f);
+    
     int total = 0;
     for(int i=0; i<blocksPerGrid; i++) {
         total += h_partial[i];

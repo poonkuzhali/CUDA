@@ -46,8 +46,12 @@ __global__ void reduce(int *input, int *output, int length) {
     }
 }
 
-int main() {
-    const int length = 100;
+int main(int argc, char **argv) {
+    if(argc < 2) {
+        printf("Length of array required!!\n");
+        return -1;
+    }
+    const int length = atoi(argv[1]);
     const int threadsPerBlock = 256;
     const int blocksPerGrid = (length + threadsPerBlock - 1)/threadsPerBlock;
 

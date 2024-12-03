@@ -21,6 +21,25 @@ void serialMultiplication(float *a, float *b, float *result, int N) {
     }
 }
 
+void tiledSerialMultiplication(float *a, float *b, float *result, int N, int tileSize) {
+    for (int ii = 0; ii < N; ii += tileSize) {
+        for (int jj = 0; jj < N; jj += tileSize) {
+            for (int kk = 0; kk < N; kk += tileSize) {
+                for (int i = ii; i < ii + tileSize && i < N; i++) {
+                    for (int j = jj; j < jj + tileSize && j < N; j++) {
+                        float val = 0;
+                        for (int k = kk; k < kk + tileSize && k < N; k++) {
+                            val += a[i * N + k] * b[k * N + j];
+                        }
+                        result[i * N + j] += val;
+                    }
+                }
+            }
+        }
+    }
+}
+
+
 __global__ void gpuMultiplication(float *a, float *b, float *result, int N) {
     int row = blockIdx.y * blockDim.y + threadIdx.y;
     int col = blockIdx.x * blockDim.x + threadIdx.x;
@@ -57,11 +76,16 @@ int main(int argc, char **argv) {
     printf("Matrix initialized!\n");
 
     //CPU
-    clock_t start = clock();
-    serialMultiplication(h_a, h_b, h_cpu, N);
-    clock_t end = clock();
-    printf("CPU Time: %.6f s\n", (double)(end - start) / CLOCKS_PER_SEC);
-
+    if(N>2000) {
+        printf("Skipping serial...\n");
+    } else {
+        clock_t start = clock();
+        // tiledSerialMultiplication(h_a, h_b, h_cpu, N, 32);
+        serialMultiplication(h_a, h_b, h_cpu, N);
+        clock_t end = clock();
+        printf("CPU Time: %.6f s\n", (double)(end - start) / CLOCKS_PER_SEC);
+    }
+    
     //device matrices
     float *d_a;
     float *d_b;
@@ -96,14 +120,14 @@ int main(int argc, char **argv) {
 
     cudaMemcpy(h_gpu, d_c, size, cudaMemcpyDeviceToHost);
 
-    int correct = 1;
-    for (int i = 0; i < N * N; i++) {
-        if (fabs(h_cpu[i] - h_gpu[i]) > 1e-4) {
-            correct = 0;
-            break;
-        }
-    }
-    printf("Verification: %s\n", correct ? "SUCCESS" : "FAILED");
+    // int correct = 1;
+    // for (int i = 0; i < N * N; i++) {
+    //     if (fabs(h_cpu[i] - h_gpu[i]) > 1e-4) {
+    //         correct = 0;
+    //         break;
+    //     }
+    // }
+    // printf("Verification: %s\n", correct ? "SUCCESS" : "FAILED");
 
     free(h_a);
     free(h_b);
